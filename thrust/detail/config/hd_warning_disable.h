@@ -24,8 +24,13 @@
 
 #if defined(__CUDACC__)
 
+#if defined(__CORIANDERCC__)
+#define __thrust_hd_warning_disable__
+#else
 #define __thrust_hd_warning_disable__ \
 #pragma hd_warning_disable
+#endif
+
 #else
 
 #define __thrust_hd_warning_disable__
