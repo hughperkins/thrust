@@ -21,3 +21,4 @@
 
 #include <thrust/detail/config/config.h>
 
+#define __thrust_exec_check_disable__
