@@ -27,6 +27,8 @@
 #include <vector>
 #include <utility>
 
+#include <iostream>
+
 namespace thrust
 {
 
@@ -92,7 +94,9 @@ template<typename T, typename Alloc = thrust::device_malloc_allocator<T> >
      */
     __host__
     explicit device_vector(size_type n, const value_type &value)
-      :Parent(n,value) {}
+      :Parent(n,value) {
+        std::cout << "thrust/device_vector.h device_vector(n=" << n << ", value=" << value << std::endl;
+      }
 
     /*! Copy constructor copies from an exemplar \p device_vector.
      *  \param v The \p device_vector to copy.

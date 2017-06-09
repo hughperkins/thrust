@@ -27,6 +27,8 @@
 #include <thrust/pair.h>
 
 
+#include "cocl/cocl_logging.h"
+
 // It's not possible to launch a CUDA kernel unless __BULK_HAS_CUDART__
 // is 1, so we'd like to just hide all this code when that macro is 0.
 // Unfortunately, we can't actually modulate kernel launches based on that macro
@@ -36,6 +38,7 @@
 // So we allow the user to unconditionally create instances of classes like cuda_launcher
 // even though the member function .launch(...) isn't always available.
 
+#include <iostream>
 
 BULK_NAMESPACE_PREFIX
 namespace bulk
@@ -61,7 +64,10 @@ struct cuda_launcher_base
   __host__ __device__
   cuda_launcher_base()
     : m_device_properties(bulk::detail::device_properties())
-  {}
+  {
+    cocl::Indentor indentor;
+    indentor << "cuda_launcher.cpp cuda_launcher_base::cuda_launcher_base()" << std::endl;
+  }
 
 
   __host__ __device__
@@ -69,6 +75,8 @@ struct cuda_launcher_base
   {
     if(num_blocks > 0)
     {
+      cocl::Indentor indentor;
+      indentor << "cuda_launcher.cpp cuda_launcher_base::launch()" << std::endl;
       super_t::launch(num_blocks, block_size, num_dynamic_smem_bytes, stream, task);
 
       bulk::detail::synchronize_if_enabled("bulk_kernel_by_value");
@@ -82,6 +90,8 @@ struct cuda_launcher_base
                                                         size_type num_threads_per_block,
                                                         size_type num_smem_bytes_per_block)
   {
+    cocl::Indentor indentor;
+    indentor << "cuda_launcher.cpp cuda_launcher_base::max_active_blocks_per_multiprocessor()" << std::endl;
     return static_cast<size_type>(bulk::detail::cuda_launch_config_detail::max_active_blocks_per_multiprocessor(props, attr, num_threads_per_block, num_smem_bytes_per_block));
   } // end max_active_blocks_per_multiprocessor()
 
@@ -92,6 +102,8 @@ struct cuda_launcher_base
   __host__ __device__
   static thrust::pair<size_type,size_type> dynamic_smem_occupancy_limit(const device_properties_t &props, const function_attributes_t &attr, size_type num_threads_per_block, size_type num_smem_bytes_per_block)
   {
+    cocl::Indentor indentor;
+    indentor << "cuda_launcher.cpp cuda_launcher_base::dynamic_smem_occupancy_limit()" << std::endl;
     // figure out the kernel's occupancy with 0 bytes of dynamic smem
     size_type occupancy = max_active_blocks_per_multiprocessor(props, attr, num_threads_per_block, num_smem_bytes_per_block);
 
@@ -105,6 +117,8 @@ struct cuda_launcher_base
   __host__ __device__
   size_type choose_heap_size(const device_properties_t &props, size_type group_size, size_type requested_size)
   {
+    cocl::Indentor indentor;
+    indentor << "cuda_launcher.cpp cuda_launcher_base::choose_heap_size()" << std::endl;
     function_attributes_t attr = bulk::detail::function_attributes(super_t::global_function_pointer());
 
     // if the kernel's ptx version is < 200, we return 0 because there is no heap
@@ -146,13 +160,21 @@ struct cuda_launcher_base
   __host__ __device__
   size_type choose_group_size(size_type requested_size)
   {
+    cocl::Indentor indentor;
+    indentor << "cuda_launcher.cpp cuda_launcher_base::choose_group_size(requested_size=" << requested_size << ")" << std::endl;
+    // throw std::runtime_error("choose_group_size");
     size_type result = requested_size;
 
+    indentor << "  choose_group_size result=" << result << " use_default=" << use_default << std::endl;
     if(result == use_default)
     {
       bulk::detail::function_attributes_t attr = bulk::detail::function_attributes(super_t::global_function_pointer());
+      indentor << "  cuda_launcher_base::choose_group_size()  got attributes from calling bulk::detail::function_atributes(...)" << std::endl;
 
-      return static_cast<size_type>(bulk::detail::block_size_with_maximum_potential_occupancy(attr, device_properties()));
+      indentor << "  cuda_launcher_base::choose_group_size(): calling bulk::detail::block_size_with_maximum_potential_occupancy()" << std::endl;
+      size_type res = static_cast<size_type>(bulk::detail::block_size_with_maximum_potential_occupancy(attr, device_properties()));
+      indentor << "  cuda_launcher_base::choose_group_size(): res of bulk::detail::block_size_with_maximum_potential_occupancy result=" << res << std::endl;
+      return res;
     } // end if
 
     return result;
@@ -162,6 +184,8 @@ struct cuda_launcher_base
   __host__ __device__
   size_type choose_subscription(size_type block_size)
   {
+    cocl::Indentor indentor;
+    indentor << "cuda_launcher.cpp cuda_launcher_base::choose_subscription()" << std::endl;
     // given no other info, this is a reasonable guess
     return block_size > 0 ? device_properties().maxThreadsPerMultiProcessor / block_size : 0;
   }
@@ -170,6 +194,8 @@ struct cuda_launcher_base
   __host__ __device__
   size_type choose_num_groups(size_type requested_num_groups, size_type group_size)
   {
+    cocl::Indentor indentor;
+    indentor << "cuda_launcher.cpp cuda_launcher_base::choose_num_groups()" << std::endl;
     size_type result = requested_num_groups;
 
     if(result == use_default)
@@ -188,6 +214,8 @@ struct cuda_launcher_base
   __host__ __device__
   size_type max_physical_grid_size()
   {
+    cocl::Indentor indentor;
+    indentor << "cuda_launcher.cpp cuda_launcher_base::max_physical_grid_size()" << std::endl;
     // get the limit of the actual device
     int actual_limit = device_properties().maxGridSize[0];
 
@@ -213,6 +241,8 @@ struct cuda_launcher_base
   __host__ __device__
   const device_properties_t &device_properties() const
   {
+    cocl::Indentor indentor;
+    indentor << "cuda_launcher.cpp cuda_launcher_base::device_properties_t()" << std::endl;
     return m_device_properties;
   }
 
@@ -300,9 +330,13 @@ struct cuda_launcher<
     // if a static blocksize is set, we ignore the requested group size
     // and just use the static value
     size_type group_size = blocksize;
+    cocl::Indentor indentor;
+    indentor << "thrust/system/cuda/detail/bulk/detail/cuda_launcher/cuda_launcher.hpp cuda_launcher::choose_sizes(...) line 317" << std::endl;
+    // indentor << "    requested_num_groups=" << requested_num_groups << ", requested_group_size=" << requested_group_size << std::endl;
     if(group_size == 0)
     {
       group_size = super_t::choose_group_size(requested_group_size);
+      indentor << "  cuda_launcher::choose_sizes() group_size=" << group_size << std::endl;
     } // end if
 
     // if a static gridsize is set, we ignore the requested group size
@@ -311,6 +345,7 @@ struct cuda_launcher<
     if(num_groups == 0)
     {
       num_groups = super_t::choose_num_groups(requested_num_groups, group_size);
+       indentor << "  cuda_launcher::choose_sizes() num_groups=" << num_groups << std::endl;
     } // end if
 
     return thrust::make_pair(num_groups, group_size);
@@ -392,6 +427,7 @@ struct cuda_launcher<
   __host__ __device__
   thrust::tuple<size_type,size_type> configure(group_type g)
   {
+    std::cout << "thrust/system/cuda/detail/bulk/detail/cuda_launcher/cuda_launcher.hpp cuda_launcher::configure(group type) g.size()=" << g.size() << std::endl;
     size_type block_size = thrust::min<size_type>(g.size(), super_t::choose_group_size(use_default));
 
     // don't ask for more than a reasonable number of blocks

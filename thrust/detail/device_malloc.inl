@@ -25,6 +25,8 @@
 #include <thrust/system/detail/generic/select_system.h>
 #include <thrust/detail/malloc_and_free.h>
 
+#include <iostream>
+
 namespace thrust
 {
 
@@ -37,7 +39,7 @@ thrust::device_ptr<void> device_malloc(const std::size_t n)
 
   // XXX lower to select_system(system) here
   system s;
-
+  std::cout << "detail/device_malloc.inl device_malloc<void>(n=" << n << ")" << std::endl;
   return thrust::device_ptr<void>(thrust::malloc(s, n).get());
 } // end device_malloc()
 
@@ -52,6 +54,7 @@ template<typename T>
   // XXX lower to select_system(system) here
   system s;
 
+  std::cout << "detail/device_malloc.inl device_malloc<T>(n=" << n << ")" << std::endl;
   return thrust::device_ptr<T>(thrust::malloc<T>(s,n).get());
 } // end device_malloc()
 

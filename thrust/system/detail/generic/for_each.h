@@ -26,6 +26,8 @@
 #include <thrust/system/detail/generic/tag.h>
 #include <thrust/detail/static_assert.h>
 
+#include <iostream>
+
 namespace thrust
 {
 namespace system
@@ -46,6 +48,7 @@ InputIterator for_each(thrust::execution_policy<DerivedPolicy> &exec,
                        UnaryFunction f)
 {
   // unimplemented
+  std::cout << "thrust/system/detail/generic/for_each.h template<DerivedPolicy, InputIterator, UnaryFunction> InputIterator for_each(exec, first, last, f)" << std::endl;
   THRUST_STATIC_ASSERT( (thrust::detail::depend_on_instantiation<InputIterator, false>::value) );
   return first;
 } // end for_each()
@@ -62,6 +65,7 @@ InputIterator for_each_n(thrust::execution_policy<DerivedPolicy> &exec,
                          UnaryFunction f)
 {
   // unimplemented
+  std::cout << "thrust/system/detail/generic/for_each.h template<DerivedPolicy, InputIterator, Size, UnaryFunction> InputIterator for_each(exec, first, n, f)" << std::endl;
   THRUST_STATIC_ASSERT( (thrust::detail::depend_on_instantiation<InputIterator, false>::value) );
   return first;
 } // end for_each_n()

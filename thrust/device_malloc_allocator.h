@@ -28,6 +28,7 @@
 #include <thrust/device_free.h>
 #include <limits>
 #include <stdexcept>
+#include <iostream>
 
 namespace thrust
 {
@@ -89,7 +90,9 @@ template<typename T>
 
     /*! No-argument constructor has no effect. */
     __host__ __device__
-    inline device_malloc_allocator() {}
+    inline device_malloc_allocator() {
+        std::cout << "thrust/device_malloc_allocator.h device_malloc_allocator()" << std::endl;
+    }
 
     /*! No-argument destructor has no effect. */
     __host__ __device__
@@ -125,6 +128,7 @@ template<typename T>
     inline pointer allocate(size_type cnt,
                             const_pointer = const_pointer(static_cast<T*>(0)))
     {
+      std::cout << "device_malloc_allocator allocate(cnt=" << cnt << ", const_pointer)" << std::endl;
       if(cnt > this->max_size())
       {
         throw std::bad_alloc();

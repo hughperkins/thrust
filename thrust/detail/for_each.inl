@@ -26,6 +26,8 @@
 #include <thrust/system/detail/generic/for_each.h>
 #include <thrust/system/detail/adl/for_each.h>
 
+#include <iostream>
+
 namespace thrust
 {
 
@@ -39,6 +41,7 @@ __host__ __device__
                          InputIterator last,
                          UnaryFunction f)
 {
+  std::cout << "for_each execution_policy_base, InputIterator, InputIterator, UnaryFunction" << std::endl;
   using thrust::system::detail::generic::for_each;
 
   return for_each(thrust::detail::derived_cast(thrust::detail::strip_const(exec)), first, last, f);
@@ -51,6 +54,7 @@ InputIterator for_each(InputIterator first,
                        InputIterator last,
                        UnaryFunction f)
 {
+  std::cout << "for_each InputIterator, InputIterator, UnaryFunction" << std::endl;
   using thrust::system::detail::generic::select_system;
   typedef typename thrust::iterator_system<InputIterator>::type System;
 
@@ -66,6 +70,8 @@ __host__ __device__
                            Size n,
                            UnaryFunction f)
 {
+  std::cout << "for_each_n execution_policy_base, InputIterator, n, UnaryFunction" << std::endl;
+  std::cout << "n: " << n << std::endl;
   using thrust::system::detail::generic::for_each_n;
 
   return for_each_n(thrust::detail::derived_cast(thrust::detail::strip_const(exec)), first, n, f);
@@ -79,6 +85,7 @@ InputIterator for_each_n(InputIterator first,
                          Size n,
                          UnaryFunction f)
 {
+  std::cout << "for_each_n InputIterator, n, UnaryFunction" << std::endl;
   using thrust::system::detail::generic::select_system;
 
   typedef typename thrust::iterator_system<InputIterator>::type System;

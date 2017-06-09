@@ -23,6 +23,8 @@
 #include <thrust/system/detail/generic/memory.h>
 #include <thrust/system/detail/adl/malloc_and_free.h>
 
+#include <iostream>
+
 namespace thrust
 {
 
@@ -46,8 +48,9 @@ pointer<T,DerivedPolicy> malloc(const thrust::detail::execution_policy_base<Deri
 {
   using thrust::system::detail::generic::malloc;
 
+  std::cout << "detail/malloc_and_free.h malloc<T>(exec, n=" << n << ")" << std::endl;
   T *raw_ptr = static_cast<T*>(thrust::raw_pointer_cast(malloc<T>(thrust::detail::derived_cast(thrust::detail::strip_const(exec)), n)));
-
+  std::cout << "  malloc<T> raw_ptr=" << raw_ptr << std::endl;
   return pointer<T,DerivedPolicy>(raw_ptr);
 }
 

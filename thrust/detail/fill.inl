@@ -25,6 +25,8 @@
 #include <thrust/system/detail/generic/fill.h>
 #include <thrust/system/detail/adl/fill.h>
 
+#include <iostream>
+
 namespace thrust
 {
 
@@ -38,6 +40,7 @@ __host__ __device__
             const T &value)
 {
   using thrust::system::detail::generic::fill;
+  std::cout << "fill exec, first, last, value" << std::endl;
   return fill(thrust::detail::derived_cast(thrust::detail::strip_const(exec)), first, last, value);
 } // end fill()
 
@@ -51,6 +54,7 @@ __host__ __device__
                         const T &value)
 {
   using thrust::system::detail::generic::fill_n;
+  std::cout << "fill_n exec, first, n=" << n << ", value=" << value << std::endl;
   return fill_n(thrust::detail::derived_cast(thrust::detail::strip_const(exec)), first, n, value);
 } // end fill_n()
 
@@ -67,6 +71,7 @@ __host__ __device__
 
   System system;
 
+  std::cout << "fill first, last, value" << std::endl;
   thrust::fill(select_system(system), first, last, value);
 } // end fill()
 
@@ -83,6 +88,7 @@ __host__ __device__
 
   System system;
 
+  std::cout << "fill_n first, n, value" << std::endl;
   return thrust::fill_n(select_system(system), first, n, value);
 } // end fill()
 

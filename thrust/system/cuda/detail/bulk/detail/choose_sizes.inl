@@ -21,6 +21,7 @@
 #include <thrust/system/cuda/detail/bulk/detail/closure.hpp>
 #include <thrust/system/cuda/detail/bulk/detail/cuda_launcher/cuda_launcher.hpp>
 
+#include "cocl/cocl_logging.h"
 
 BULK_NAMESPACE_PREFIX
 namespace bulk
@@ -39,8 +40,15 @@ thrust::pair<typename parallel_group<concurrent_group<> >::size_type,
     parallel_group<concurrent_group<> >,
     Closure
   > launcher;
-
-  return launcher.choose_sizes(g.size(), g.this_exec.size());
+  // return launcher.choose_sizes(g.size(), g.this_exec.size());
+  cocl::Indentor indentor;
+  indentor << "thrust/system/cuda/detail/bulk/detail/choose_sizes.inl choose_sizes(parallel_group<concurrent_group<> > g, Closuse)" << std::endl;
+  thrust::pair< parallel_group<concurrent_group<> >::size_type,
+      concurrent_group<>::size_type> res = launcher.choose_sizes(g.size(), g.this_exec.size());
+  // std::cout << res.first << std::endl;
+  indentor << "res: " <<
+     " num_groups=" << res.first << ", group_size="  << res.second << std::endl;
+  return res;
 } // end choose_sizes()
 
 
@@ -93,6 +101,7 @@ thrust::pair<typename parallel_group<concurrent_group<> >::size_type,
              typename concurrent_group<>::size_type>
   choose_sizes(parallel_group<concurrent_group<> > g, Function f, Arg1 arg1, Arg2 arg2, Arg3 arg3, Arg4 arg4)
 {
+  std::cout << "thrust/system/cuda/detail/bulk/detail/choose_sizes.inl choose_sizes(parallel_group<concurrent_group<> > g, function f, Arg1, ..., Arg4)" << std::endl;
   return bulk::detail::choose_sizes(g, detail::make_closure(f,arg1,arg2,arg3,arg4));
 }
 

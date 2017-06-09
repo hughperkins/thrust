@@ -113,6 +113,7 @@ RandomAccessIterator for_each_n(execution_policy<DerivedPolicy> &exec,
     __host__ __device__
     static RandomAccessIterator parallel_path(execution_policy<DerivedPolicy> &exec, RandomAccessIterator first, Size n, UnaryFunction f)
     {
+      std::cout << "thrust/system/cuda/detail/for_each.inl for_each_n::workaround::parallel_path(exec,first, n=" << n << ", f)" << std::endl;
       thrust::detail::wrapped_function<UnaryFunction,void> wrapped_f(f);
 
       // opportunistically narrow the type of n
@@ -122,15 +123,24 @@ RandomAccessIterator for_each_n(execution_policy<DerivedPolicy> &exec,
       unsigned int narrow_group_size = 0;
 
       // automatically choose a number of groups and a group size
-      thrust::tie(narrow_num_groups, narrow_group_size) = bulk_::choose_sizes(bulk_::grid(), for_each_n_detail::for_each_kernel(), bulk_::root, first, wrapped_f, narrow_n);
+      std::cout << "  thrust/system/cuda/detail/for_each.inl for_each_n::workaround::parallel_path() calling bulk_::choose_sizes() ..." << std::endl;
+      thrust::tie(narrow_num_groups, narrow_group_size) = bulk_::choose_sizes(bulk_::grid(), for_each_n_detail::for_each_kernel(),
+        bulk_::root, first, wrapped_f, narrow_n);
+      std::cout << "  thrust/system/cuda/detail/for_each.inl for_each_n::workaround::parallel_path() ... after bulk_::choose_sizes()" << std::endl;
 
       // do we need to use the wider type?
       if(for_each_n_detail::use_wide_counter(n, narrow_num_groups * narrow_group_size))
       {
         Size num_groups = 0;
         Size group_size = 0;
+        std::cout << "thrust/system/cuda/detail/for_each.inl for_each_n::workaround::parallel_path(execution_policy<DerivedPolicy> &exec, " <<
+            "RandomAccessIterator first, Size n=" << n << ", UnaryFunction f)" << std::endl;
+        // std::cout << "    bulk_::grid().size()=" << bulk_::grid().size() << std::endl;
+        // std::cout << "    bulk_::grid().this_exec.size()=" << bulk_::grid().this_exec.size() << std::endl;
         thrust::tie(num_groups, group_size) = bulk_::choose_sizes(bulk_::grid(), for_each_n_detail::for_each_kernel(), bulk_::root, first, wrapped_f, n);
 
+        std::cout << "    for_each.inl for_each_n::workaround::parallel_path num_groups=" << num_groups <<
+            " group_size=" << group_size << std::endl;
         num_groups = thrust::min<Size>(num_groups, thrust::detail::util::divide_ri(n, group_size));
 
         bulk_::async(bulk_::grid(num_groups,group_size,0,stream(thrust::detail::derived_cast(exec))), for_each_n_detail::for_each_kernel(), bulk_::root, first, wrapped_f, n);

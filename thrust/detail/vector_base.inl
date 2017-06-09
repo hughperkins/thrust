@@ -31,6 +31,7 @@
 #include <thrust/detail/temporary_array.h>
 
 #include <stdexcept>
+#include <iostream>
 
 namespace thrust
 {
@@ -62,6 +63,7 @@ template<typename T, typename Alloc>
       :m_storage(),
        m_size(0)
 {
+  std::cout << "thrust/detail/vector_base.inl vector_base(n=" << n << ", value=" << value << ")" << std::endl;
   fill_init(n,value);
 } // end vector_base::vector_base()
 

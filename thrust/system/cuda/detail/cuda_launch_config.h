@@ -19,6 +19,8 @@
 #include <cstddef>
 #include <thrust/detail/config.h>
 
+#include "cocl/cocl_logging.h"
+
 namespace thrust
 {
 namespace system
@@ -242,6 +244,8 @@ size_t max_active_blocks_per_multiprocessor(const device_properties_t    &proper
                                             size_t CTA_SIZE,
                                             size_t dynamic_smem_bytes)
 {
+  cocl::Indentor indentor;
+  indentor << "cuda_launch_config.h max_active_blocks_per_multiprocessor(...)" << std::endl;
   // Determine the maximum number of CTAs that can be run simultaneously per SM
   // This is equivalent to the calculation done in the CUDA Occupancy Calculator spreadsheet
 
@@ -252,6 +256,7 @@ size_t max_active_blocks_per_multiprocessor(const device_properties_t    &proper
   const size_t maxBlocksPerSM  = max_blocks_per_multiprocessor(properties);
 
   // Calc limits
+  indentor << "  max_active_blocks_per_multiprocessor CTA_SIZE=" << CTA_SIZE << std::endl;
   const size_t ctaLimitThreads = (CTA_SIZE <= size_t(properties.maxThreadsPerBlock)) ? maxThreadsPerSM / CTA_SIZE : 0;
   const size_t ctaLimitBlocks  = maxBlocksPerSM;
 
@@ -263,6 +268,7 @@ size_t max_active_blocks_per_multiprocessor(const device_properties_t    &proper
   const size_t smemPerCTA = util::round_i(smemBytes, smemAllocationUnit);
 
   // Calc limit
+  indentor << "  max_active_blocks_per_multiprocessor smemPerCTA=" << smemPerCTA << std::endl;
   const size_t ctaLimitSMem = smemPerCTA > 0 ? properties.sharedMemPerBlock / smemPerCTA : maxBlocksPerSM;
 
   //////////////////////////////////////////
@@ -279,6 +285,7 @@ size_t max_active_blocks_per_multiprocessor(const device_properties_t    &proper
     // GPUs of compute capability 1.x allocate registers to CTAs
     // Number of regs per block is regs per thread times number of warps times warp size, rounded up to allocation unit
     const size_t regsPerCTA = util::round_i(attributes.numRegs * properties.warpSize * numWarps, regAllocationUnit);
+    indentor << "  max_active_blocks_per_multiprocessor regsPerCTA=" << regsPerCTA << std::endl;
     ctaLimitRegs = regsPerCTA > 0 ? properties.regsPerBlock / regsPerCTA : maxBlocksPerSM;
   }
   else
@@ -287,14 +294,18 @@ size_t max_active_blocks_per_multiprocessor(const device_properties_t    &proper
     // Number of regs per warp is regs per thread times times warp size, rounded up to allocation unit
     const size_t regsPerWarp = util::round_i(attributes.numRegs * properties.warpSize, regAllocationUnit);
     const size_t numSides = num_sides_per_multiprocessor(properties);
+    indentor << "  max_active_blocks_per_multiprocessor numSides=" << numSides << std::endl;
     const size_t numRegsPerSide = properties.regsPerBlock / numSides;
+    indentor << "  max_active_blocks_per_multiprocessor regsPerWarp=" << regsPerWarp << std::endl;
     ctaLimitRegs = regsPerWarp > 0 ? ((numRegsPerSide / regsPerWarp) * numSides) / numWarps : maxBlocksPerSM;
   }
 
   //////////////////////////////////////////
   // Overall limit is min() of limits due to above reasons
   //////////////////////////////////////////
-  return util::min_(ctaLimitRegs, util::min_(ctaLimitSMem, util::min_(ctaLimitThreads, ctaLimitBlocks)));
+  size_t res = util::min_(ctaLimitRegs, util::min_(ctaLimitSMem, util::min_(ctaLimitThreads, ctaLimitBlocks)));
+  indentor << "  max_active_blocks_per_multiprocessor res=" << res << std::endl;
+  return res;
 }
 
 
@@ -307,15 +318,21 @@ std::size_t block_size_with_maximum_potential_occupancy(const function_attribute
                                                         const device_properties_t   &properties,
                                                         UnaryFunction block_size_to_dynamic_smem_size)
 {
+  cocl::Indentor indentor;
+  indentor << "cuda_launch_config.h block_size_with_maximum_potential_occupancy" << std::endl;
   size_t max_occupancy      = properties.maxThreadsPerMultiProcessor;
   size_t largest_blocksize  = cuda_launch_config_detail::util::min_(properties.maxThreadsPerBlock, attributes.maxThreadsPerBlock);
   size_t granularity        = properties.warpSize;
   size_t max_blocksize      = 0;
   size_t highest_occupancy  = 0;
+  // indentor << "  max_occupancy=" << max_occupancy << std::endl;
+  indentor << "  cuda_launch_config.h block_size_with_maximum_potential_occupancy() largest_blocksize=" << largest_blocksize << std::endl;
 
   for(size_t blocksize = largest_blocksize; blocksize != 0; blocksize -= granularity)
   {
+    indentor << "    cuda_launch_config.h trying blocksize=" << blocksize << std::endl;
     size_t occupancy = blocksize * cuda_launch_config_detail::max_active_blocks_per_multiprocessor(properties, attributes, blocksize, block_size_to_dynamic_smem_size(blocksize));
+    indentor << "    cuda_launch_config.h this occupancy=" << occupancy << std::endl;
 
     if(occupancy > highest_occupancy)
     {
@@ -328,6 +345,7 @@ std::size_t block_size_with_maximum_potential_occupancy(const function_attribute
       break;
   }
 
+  indentor << "   cuda_launch_config.h res: max_blocksize=" << max_blocksize << std::endl;
   return max_blocksize;
 }
 
@@ -336,7 +354,11 @@ inline __host__ __device__
 std::size_t block_size_with_maximum_potential_occupancy(const function_attributes_t &attributes,
                                                         const device_properties_t   &properties)
 {
-  return block_size_with_maximum_potential_occupancy(attributes, properties, cuda_launch_config_detail::util::zero_function<std::size_t>());
+  cocl::Indentor indentor;
+  indentor << "cuda_launch_config.h block_size_with_maximum_potential_occupancy line 348" << std::endl;
+  std::size_t res = block_size_with_maximum_potential_occupancy(attributes, properties, cuda_launch_config_detail::util::zero_function<std::size_t>());
+  indentor << "  cuda_launch_config.h block_size_with_maximum_potential_occupancy() res=" << res << std::endl;
+  return res;
 }
 
 
@@ -361,19 +383,24 @@ size_t max_blocksize_subject_to_smem_usage(const device_properties_t   &properti
                                            const function_attributes_t &attributes,
                                            UnaryFunction blocksize_to_dynamic_smem_usage)
 {
+  cocl::Indentor indentor;
+  indentor << "cuda_launch_config.h max_blocksize_subject_to_smem_usage()" << std::endl;
   size_t largest_blocksize = (thrust::min)(properties.maxThreadsPerBlock, attributes.maxThreadsPerBlock);
   size_t granularity = properties.warpSize;
   
   for(int blocksize = largest_blocksize; blocksize > 0; blocksize -= granularity)
   {
     size_t total_smem_usage = blocksize_to_dynamic_smem_usage(blocksize) + attributes.sharedSizeBytes;
+    indentor << "  cuda_launch_config.h max_blocksize_subject_to_smem_usage() try blocksize=" << blocksize << " => total_smem_usage=" << total_smem_usage << std::endl;
 
     if(total_smem_usage <= properties.sharedMemPerBlock)
     {
+      indentor << "  cuda_launch_config.h max_blocksize_subject_to_smem_usage() total_smem_usage <= properties.sharedMemPerBlock, so returning blocksize=" << blocksize << std::endl;
       return blocksize;
     }
   }
 
+  indentor << "  cuda_launch_config.h max_blocksize_subject_to_smem_usage() ERROR: no valid smem usage found, so returning blocksize=" << 0 << std::endl;
   return 0;
 }
 

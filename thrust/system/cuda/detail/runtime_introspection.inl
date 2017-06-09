@@ -22,6 +22,7 @@
 #include <thrust/system/cuda/detail/throw_on_error.h>
 #include <cstdio>
 
+#include <iostream>
 
 namespace thrust
 {
@@ -168,6 +169,8 @@ inline function_attributes_t function_attributes(KernelFunction kernel)
 
   typedef void (*fun_ptr_type)();
 
+  std::cout << "thrust/system/cuda/detail/runtime_introspection.inl function_attributes(kernel)" << std::endl;
+  throw std::runtime_error("halt here");
   fun_ptr_type fun_ptr = reinterpret_cast<fun_ptr_type>(kernel);
   throw_on_error(cudaFuncGetAttributes(&attributes, reinterpret_cast<void*>(fun_ptr)), "cudaFuncGetAttributes in function_attributes");
 
